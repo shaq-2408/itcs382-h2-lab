@@ -15,33 +15,51 @@ Repository URL:
 
 Commit of the starter, before any change:
 
-0.3 Your prediction for `staff`, written before the second run:
+0.3 Your prediction for `staff`, written before the second run: Both parcels will disappear after restarting the program because they were stored only in memory.
 
 Output of the second run, for `staff` and `quit`:
 
 ```text
-
+> staff
+Free lockers: 3
+> quit
 ```
 
 State in one sentence where you think the parcels of the first run were kept.
+The parcels were stored in the memory of the running program. When the program ended, the memory was freed and the parcels were lost.
 
 0.5 The line of Main that you would change to keep the parcels somewhere else:
 
 ```java
+ParcelRepository repository = new InMemoryParcelRepository();
 
 ```
 
 0.6 Commit of the switch to H2:
 
 0.7 Output of `SELECT * FROM PARCEL;` after you stored two parcels:
+sql> SELECT * FROM PARCEL;
+CODE  | STUDENT_ID | PARCEL_SIZE | STATUS | LOCKER_NUMBER
+P1001 | S1001      | SMALL       | STORED | 1
+P1002 | S1002      | LARGE       | STORED | 3
+(2 rows)
 
 ```text
-
+SHOW COLUMNS FROM PARCEL;
+FIELD         | TYPE                  | NULL | KEY | DEFAULT
+CODE          | CHARACTER VARYING(20) | NO   | PRI | NULL
+STUDENT_ID    | CHARACTER VARYING(20) | NO   |     | NULL
+PARCEL_SIZE   | CHARACTER VARYING(10) | NO   |     | NULL
+STATUS        | CHARACTER VARYING(10) | NO   |     | NULL
+LOCKER_NUMBER | INTEGER               | YES  |     | NULL
+(5 rows)
 ```
 
 0.8 Explain why ParcelPoint could not start while the H2 Shell was open, and identify the class that wrote the message `Cannot create the PARCEL table`.
+The H2 database was already locked by the H2 Shell, so the second application could not open the same database file. This happens because H2 is running in embedded mode. The class that wrote the message "Cannot create the PARCEL table" is `H2ParcelRepository`.
 
 0.9 Explain why `staff` shows no parcel while `find` shows each one, and why all three lockers look free.
+The `find` command retrieves parcels from the H2 database, so it can find both stored parcels. The `staff` command shows three free lockers because the staff overview does not read the stored parcel information from the H2 database. This means the staff overview and the database are not synchronized. 
 
 0.11 Your findAll method:
 
