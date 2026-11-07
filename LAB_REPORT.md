@@ -64,6 +64,22 @@ The `find` command retrieves parcels from the H2 database, so it can find both s
 0.11 Your findAll method:
 
 ```java
+@Override
+public List<Parcel> findAll() {
+    String sql = "SELECT * FROM PARCEL ORDER BY CODE";
+    List<Parcel> parcels = new ArrayList<>();
+
+    try (Connection connection = connect();
+         PreparedStatement statement = connection.prepareStatement(sql);
+         ResultSet row = statement.executeQuery()) {
+        while (row.next()) {
+            parcels.add(toParcel(row));
+        }
+    } catch (SQLException e) {
+        throw new IllegalStateException("Cannot read the parcels", e);
+    }
+    return parcels;
+}
 
 ```
 
@@ -72,7 +88,10 @@ Commit that adds findAll:
 0.12 Output of `SELECT * FROM PARCEL;` after the pickup:
 
 ```text
-
+CODE  | STUDENT_ID | PARCEL_SIZE | STATUS    | LOCKER_NUMBER
+P1001 | S1001      | SMALL       | PICKED_UP | null
+P1002 | S1002      | LARGE       | STORED    | 3
+(2 rows, 15 ms)
 ```
 
 0.13 Optional. Describe what `find P9999'OR'1'='1` showed while the SQL was joined from strings, and what it showed after you put the placeholder back.
