@@ -96,6 +96,10 @@ P1002 | S1002      | LARGE       | STORED    | 3
 
 0.13 Optional. Describe what `find P9999'OR'1'='1` showed while the SQL was joined from strings, and what it showed after you put the placeholder back.
 
+The first test showed that SQL injection is possible when the SQL query is built by concatenating strings. The input `P9999'OR'1'='1` changed the query condition, so the program returned P1001 even though P9999 does not exist.
+
+After restoring the placeholder `?` and using `statement.setString(1, code)`, the same input was treated as a normal parcel code. The program returned `No parcel with code P9999'OR'1'='1`. This shows that prepared statements help prevent SQL injection.
+
 ## Part A. Model the design
 
 A1 Complete the flowchart with one node for each package and one arrow for each dependency, from the package that uses to the package that is used. Mark the package that accesses the data store.
