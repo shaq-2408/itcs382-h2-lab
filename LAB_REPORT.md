@@ -110,20 +110,43 @@ flowchart TB
     cli
     service
     domain
-    storage
+    storage["storage, accesses the data store"]
+
+    parcelpoint --> cli
+    parcelpoint --> service
+    parcelpoint --> storage
+
+    cli --> domain
     cli --> service
+
+    service --> domain
+    service --> storage
+
+    storage --> domain
 ```
 
 State whether cli depends on storage, and explain why.
+No, cli does not depend on storage. The cli package communicates with ParcelService, which uses the ParcelRepository interface to access the data store. Therefore, cli does not need to know which storage implementation is used.
 
 A2 Complete the class diagram of the data management layer with ParcelService, the interface ParcelRepository with its three operations, and the two classes that implement it.
 
 ```mermaid
 classDiagram
     class ParcelService
+
     class ParcelRepository {
         <<interface>>
+        +save(Parcel parcel) void
+        +findByCode(String code) Optional~Parcel~
+        +findAll() List~Parcel~
     }
+
+    class InMemoryParcelRepository
+    class H2ParcelRepository
+
+    ParcelService --> ParcelRepository
+    ParcelRepository <|.. InMemoryParcelRepository
+    ParcelRepository <|.. H2ParcelRepository
 ```
 
 A3 Draw a sequence diagram for the command `store P1003 S1003 MEDIUM`, from the staff member to the repository. Show each message as an operation of the class that receives it.
@@ -132,23 +155,49 @@ A3 Draw a sequence diagram for the command `store P1003 S1003 MEDIUM`, from the 
 sequenceDiagram
     actor Staff
     participant cli as :ParcelCommandLine
+    participant service as :ParcelService
+    participant parcel as :Parcel
+    participant locker as :Locker
+    participant repository as :ParcelRepository
+
     Staff->>cli: store P1003 S1003 MEDIUM
+    cli->>service: store(parcel)
+    loop For each locker
+        service->>locker: fits(parcel)
+        locker-->>service: true or false
+    end
+    service->>locker: setParcel(parcel)
+    service->>parcel: storeIn(locker.getNumber())
+    service->>repository: save(parcel)
+    repository-->>service: saved
+    service-->>cli: Optional.of(locker)
+    cli-->>Staff: Parcel P1003 is in locker 2
 ```
 
 Explain why the last lifeline is the interface ParcelRepository rather than H2ParcelRepository.
+
+The last lifeline is the ParcelRepository interface because ParcelService depends on the interface, not on a specific implementation. The actual implementation, such as H2ParcelRepository or InMemoryParcelRepository, is selected in Main.
 
 ## Part B. Design questions
 
 1. Identify the files that you changed to move from the store in memory to H2, and explain why no other class had to change. Use the terms of this course.
 
+I changed only Main.java to use H2ParcelRepository instead of InMemoryParcelRepository. No other class had to change because ParcelService depends on the ParcelRepository interface, not a specific implementation.
+
 2. The PARCEL table stores the size of a parcel as SMALL, MEDIUM or LARGE rather than as 1, 2 or 3. Identify the type of connascence between ParcelSize and the table in each case, and explain which one is weaker.
+
+Storing SMALL, MEDIUM or LARGE uses connascence of name. Storing 1, 2 or 3 uses connascence of position or convention, which is weaker because the values depend on an agreed mapping.
 
 3. Project Phase 2 asks for a data store that needs no separate server. Explain why an embedded database such as H2 meets this rule, and describe the limit of an embedded database that Step 0.8 showed.
 
+H2 is embedded because it runs inside the program and needs no separate server. However, Step 0.8 showed that the database can be locked when another program is using it.
+
 4. State the data store that you would choose for your Project Phase 2 team, files or an embedded database, the requirement that drives the choice, and the package that will access it.
+
+I would choose an embedded database such as H2 because the data must persist and no separate server is allowed. The storage package will access the database. 
 
 ## AI usage declaration
 
-| AI tool and exact model | Date | Purpose | Files or answers it produced or changed | How you checked its output |
-| --- | --- | --- | --- | --- |
-| | | | | |
+| AI tool and exact model | Date | Purpose | Files or answers it produced or changed | How I checked its output |
+|---|---|---|---|---|
+| ChatGPT – GPT-6 | 2026-11-09 | Help with understanding the lab, answering questions and completing the report | Guidance, explanations and suggested answers for Parts A and B | Compared the answers with the lab PDF and checked the program results in VS Code. |
